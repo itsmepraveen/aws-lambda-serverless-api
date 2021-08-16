@@ -34,6 +34,19 @@ provider:
   runtime: nodejs12.x
   region: ap-southeast-2
   lambdaHashingVersion: 20201221
+  environment:
+    JOBS_TABLE: ${self:service}-${self:opt, self:provider.stage}-jobs
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+       - dynamodb:Query
+       - dynamodb:Scan
+       - dynamodb:GetItem
+       - dynamodb:PutItem
+       - dynamodb:UpdateItem
+       - dynamodb:DeleteItem
+      Resource: "*"
+
 plugins:
   - serverless-offline 
   - serverless-dynamodb-local
@@ -64,12 +77,30 @@ functions:
           request: 
             parameters:
               id: true
+  DeleteJob:
+    handler: src/jobs/deleteOne.deleteOne
+    events:
+      - http: 
+          method: DELETE 
+          path: /jobs/{id}
+          request: 
+            parameters:
+              id: true
+  UpdateJob:
+    handler: src/jobs/updateJob.updateJob
+    events:
+      - http: 
+          method: PUT 
+          path: /jobs/{id}
+          request: 
+            parameters:
+              id: true
 resources:
   Resources:
     JobsDynamoDBTable:
       Type: "AWS::DynamoDB::Table"
       Properties:
-        TableName: "serverless-jobs"
+        TableName: ${self:provider.environment.JOBS_TABLE}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S

@@ -1,11 +1,11 @@
 const dynamoDB = require('../dynamoDB');
 
-module.exports.findOne = async(evt, context) => {
+module.exports.deleteOne = async(evt, context) => {
     const id = evt.pathParameters.id;
 
     try {
         const data = await dynamoDB
-        .get({
+        .delete({
             TableName: process.env.JOBS_TABLE,
             Key: {
                 id
@@ -13,7 +13,7 @@ module.exports.findOne = async(evt, context) => {
         }).promise();
         return {
             statusCode: 200,
-            body: JSON.stringify(data.Item)
+            body: JSON.stringify({msg:`Job with ID: ${id} has been deleted successfully`})
         };
     } catch(err) {
         return {

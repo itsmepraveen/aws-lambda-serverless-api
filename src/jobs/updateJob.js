@@ -1,12 +1,13 @@
 const Joi = require('joi');
 const dynamoDB = require('../dynamoDB');
 
-module.exports.createJobs = async(evt, context) => {
+module.exports.updateJob = async(evt, context) => {
     const data = JSON.parse(evt.body);
     const timestamp = new Date().getTime();
-   
+    const id = evt.pathParameters.id;
+
     const schema = Joi.object({
-        id: Joi.string().required(),
+        id: Joi.string(),
         title: Joi.string().required(),
         published: Joi.boolean().required() 
     });
@@ -21,19 +22,23 @@ module.exports.createJobs = async(evt, context) => {
 
     const params = {
         TableName: process.env.JOBS_TABLE,
-        Item: {
-            id: data.id,
-            title: data.title,
-            published: data.published,
-            createdAt: timestamp,
-            updatedAt: timestamp
-        }
+        Key: {
+            id
+        },
+        UpdateExpression:
+            'SET title = :title, published = :published, updatedAt = :updatedAt',
+        ExpressionAttributeValues: {
+            ':title': data.title,
+            ':published': data.published,
+            ':updatedAt': timestamp
+        },
+        ReturnValues: 'ALL_NEW'
     };
     try{
-        await dynamoDB.put(params).promise();
+        const results = await dynamoDB.update(params).promise();
         return {
             statusCode: 200,
-            body: JSON.stringify(params.Item)
+            body: JSON.stringify(results.Attributes)
         }
     } catch(error){
         return {
@@ -41,4 +46,4 @@ module.exports.createJobs = async(evt, context) => {
             body: JSON.stringify(error)
         }
     }
-}
+};
